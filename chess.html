@@ -7,11 +7,11 @@
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 </head>
 <body>
-<div id="board" style="width: 400px"></div>
-<p>Status: <span id="status"></span></p>
-<p>FEN: <span id="fen"></span></p>
-<p>PGN: <span id="pgn"></span></p>
-</body>
+<div id="board" style="width: 600px; margin:0 auto;"></div>
+<p align="center">Status: <span id="status"></span></p>
+<!-- <p>FEN: <span id="fen"></span></p> -->
+<!-- <p align="center">PGN: <span id="pgn"></span></p>
+ --></body>
 <script type="text/javascript">
 var board,
   game = new Chess(),
@@ -78,7 +78,7 @@ var updateStatus = function() {
   }
 
   statusEl.html(status);
-  fenEl.html(game.fen());
+ /* fenEl.html(game.fen());*/
   pgnEl.html(game.pgn());
 };
 
