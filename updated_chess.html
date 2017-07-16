@@ -47,8 +47,18 @@ float: right;
 </style>
 </head>
 <body bgcolor="dff3f2">
-<h1 class="head" ><img src="img/chesspieces/wikipedia/wQ.png">CHESS<img src="img/chesspieces/wikipedia/bQ.png"></h1>
-
+<h1 class="head" ><img src="img/chesspieces/wikipedia/wQ.png">CHESS<img src="img/chesspieces/wikipedia/bQ.png">
+</h1>
+<h2>
+  <div align="center">
+   <font color="brown"><b><i>Id for your session: </font> <input type="text" name="fname" id="sessionId"><br>
+   <button onclick="registerSession()">Join In !</button>
+ </div>
+</h2>
+<h3>
+<div align="center">
+  <font color="brown" id="RTCStatus"><b><i> </font>
+</div></h3>
 
 <div class="white">
 White Player
@@ -88,7 +98,7 @@ var onDrop = function(source, target) {
 
   // illegal move
   if (move === null) return 'snapback';
-
+  console.log("You moved the device from "+source+"  to "+target);
   updateStatus();
 };
 
@@ -96,6 +106,7 @@ var onDrop = function(source, target) {
 // for castling, en passant, pawn promotion
 var onSnapEnd = function() {
   board.position(game.fen());
+
 };
 
 var updateStatus = function() {
@@ -141,6 +152,51 @@ var cfg = {
 board = ChessBoard('board', cfg);
 
 updateStatus();
+</script>
+<script type="text/javascript">
+//This is the script that is making the RTC sockets work
+
+//Create a new peer object with a custom server key obtained from peer.js
+var peer = new Peer({key: 'ze63oa5saa21q0k9'});
+//get other objects from the DOM 
+var status_bar=document.getElementById("RTCStatus");
+var peer_connection;
+//Callback for connection with RTC Server
+peer.on('open', function(id) {
+  console.log('My peer ID is: ' + id);
+});
+
+//Receive connection from clients
+peer.on('connection', function(conn) {
+  status_bar.innerHTML="Received a Connection";
+  conn.on('data', function(data) {
+    console.log('Received', data);
+    //Move the pieces accordingly
+    peerMoved()
+  });
+  peer_connection=conn;
+});
+
+//Sample function call to make the piece move 
+board.move('e2-e3');
+
+//Function to handle the registration of a session
+function registerSession(){
+  connectPeer(document.getElementById("sessionId").value);
+  document.getElementById("RTCStatus").innerHTML="HAHAHA";
+  return;
+}
+
+//Function to send connection to other peer
+function connectPeer(peer_id){
+  peer_connection=peer.connect(peer_id);
+  peer_connection.on('open', function() {
+  // Receive messages
+  peer_connection.on('data', function(data) {
+    console.log('Received', data);
+  });
+});
+}
 </script>
 </html>
 
