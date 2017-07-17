@@ -59,6 +59,10 @@ float: right;
 <div align="center">
   <font color="brown" id="RTCStatus"><b><i> </font>
 </div></h3>
+<h3>
+<div align="center">
+  <font color="brown" id="PeerId"><b><i> </font>
+</div></h3>
 
 <div class="white">
 White Player
@@ -78,6 +82,9 @@ var board,
   fenEl = $('#fen'),
   pgnEl = $('#pgn');
   turn=true;
+  is_multiplayer=false;
+  //The turn variables signify the turn of the user in a multiplayer game 
+
 
 // do not pick up pieces if the game is over
 // only pick up pieces for the side to move
@@ -100,11 +107,15 @@ var onDrop = function(source, target) {
   // illegal move
   if (move === null) return 'snapback';
   if(turn===false) return 'snapback';
+
+  //Only if we have a multiplayer connection we will send data to peer
+  if(is_multiplayer){
   peer_connection.send({
     start:source,
     target:target
   })
   turn=false;
+}
   updateStatus();
 };
 
@@ -160,21 +171,34 @@ board = ChessBoard('board', cfg);
 updateStatus();
 </script>
 <script type="text/javascript">
+
 //This is the script that is making the RTC sockets work
 
 //Create a new peer object with a custom server key obtained from peer.js
 var peer = new Peer({key: 'ze63oa5saa21q0k9'});
+
+
 //get other objects from the DOM 
 var status_bar=document.getElementById("RTCStatus");
+var peer_id_display=document.getElementById("PeerId");
 var peer_connection;
+
+
 //Callback for connection with RTC Server
 peer.on('open', function(id) {
   console.log('My peer ID is: ' + id);
+  peer_id_display.innerHTML="Id : "+id;
 });
+
 
 //Receive connection from clients
 peer.on('connection', function(conn) {
+  //Initialise a multi player game
   status_bar.innerHTML="Received a Connection";
+  is_multiplayer=true;
+  board = ChessBoard('board', cfg);
+
+  //Receive message callback
   conn.on('data', function(data) {
     console.log('Received', data);
     //Move the pieces accordingly
@@ -184,7 +208,6 @@ peer.on('connection', function(conn) {
   peer_connection=conn;
 });
 
-//Sample function call to make the piece move 
 
 //Function to handle the registration of a session
 function registerSession(){
@@ -193,12 +216,17 @@ function registerSession(){
   return;
 }
 
+
 //Function to send connection to other peer
 function connectPeer(peer_id){
   peer_connection=peer.connect(peer_id);
   peer_connection.on('open', function() {
-  // Receive messages
+  //Initialise a multi-player game
+  board = ChessBoard('board', cfg);
   status_bar.innerHTML="Connected..Let's Go";
+  is_multiplayer=true;
+
+  //Receive Message Callback
   peer_connection.on('data', function(data) {
     console.log('Received', data);
     peerMoved(data.start,data.target);
@@ -206,6 +234,7 @@ function connectPeer(peer_id){
   });
 });
 }
+
 
 //function to move the pieces according to the player
 function peerMoved(startIt,targetTo){
