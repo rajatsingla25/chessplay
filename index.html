@@ -77,13 +77,14 @@ var board,
   statusEl = $('#status'),
   fenEl = $('#fen'),
   pgnEl = $('#pgn');
+  turn=true;
 
 // do not pick up pieces if the game is over
 // only pick up pieces for the side to move
 var onDragStart = function(source, piece, position, orientation) {
   if (game.game_over() === true ||
       (game.turn() === 'w' && piece.search(/^b/) !== -1) ||
-      (game.turn() === 'b' && piece.search(/^w/) !== -1)) {
+      (game.turn() === 'b' && piece.search(/^w/) !== -1)|| turn===false) {
     return false;
   }
 };
@@ -98,7 +99,12 @@ var onDrop = function(source, target) {
 
   // illegal move
   if (move === null) return 'snapback';
-  console.log("You moved the device from "+source+"  to "+target);
+  if(turn===false) return 'snapback';
+  peer_connection.send({
+    start:source,
+    target:target
+  })
+  turn=false;
   updateStatus();
 };
 
@@ -172,17 +178,18 @@ peer.on('connection', function(conn) {
   conn.on('data', function(data) {
     console.log('Received', data);
     //Move the pieces accordingly
-    peerMoved()
+    peerMoved(data.start,data.target);
+    turn=true;
   });
   peer_connection=conn;
 });
 
 //Sample function call to make the piece move 
-board.move('e2-e3');
 
 //Function to handle the registration of a session
 function registerSession(){
   connectPeer(document.getElementById("sessionId").value);
+  turn=false;
   return;
 }
 
@@ -191,10 +198,21 @@ function connectPeer(peer_id){
   peer_connection=peer.connect(peer_id);
   peer_connection.on('open', function() {
   // Receive messages
+  status_bar.innerHTML="Connected..Let's Go";
   peer_connection.on('data', function(data) {
     console.log('Received', data);
+    peerMoved(data.start,data.target);
+    turn=true;        
   });
 });
+}
+
+//function to move the pieces according to the player
+function peerMoved(startIt,targetTo){
+    console.log("We are moving from"+startIt+" to "+targetTo)
+    game.move({from: startIt, to: targetTo});
+    board.position(game.fen()); // fen is the board layout
+    updateStatus();
 }
 </script>
 </html>
